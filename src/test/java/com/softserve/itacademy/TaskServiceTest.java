@@ -5,19 +5,28 @@ import com.softserve.itacademy.model.Task;
 import com.softserve.itacademy.model.ToDo;
 import com.softserve.itacademy.model.User;
 import com.softserve.itacademy.service.TaskService;
+import com.softserve.itacademy.service.ToDoService;
 import com.softserve.itacademy.service.impl.TaskServiceImpl;
 import com.softserve.itacademy.service.impl.ToDoServiceImpl;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.junit.jupiter.api.*;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 class TaskServiceTest {
 
     private TaskService taskService;
+    private ToDoService toDoService;
     private AnnotationConfigApplicationContext context;
 
     @BeforeEach
@@ -29,6 +38,7 @@ class TaskServiceTest {
         context.register(ToDoServiceImpl.class);
         context.refresh();
         taskService = context.getBean(TaskService.class);
+        toDoService = context.getBean(ToDoService.class);
     }
 
     @AfterEach
@@ -42,7 +52,7 @@ class TaskServiceTest {
     void addTask_shouldAddTaskToGivenToDo_andReturnSameTask() {
         // Arrange
 
-        ToDo todo = new ToDo();
+        ToDo todo = todo("Todo 1");
         Task task = new Task("Task 1", Priority.LOW);
 
         // Act
@@ -65,7 +75,7 @@ class TaskServiceTest {
     void updateTask_shouldReplaceEqualTaskByName_andReturnUpdated() {
         // Arrange
 
-        ToDo todo = new ToDo();
+        ToDo todo = todo("Todo 2");
         taskService.addTask(new Task("Task 2", Priority.MEDIUM), todo);
         Task updated = new Task("Task 2", Priority.HIGH); // equals by name
 
@@ -81,7 +91,7 @@ class TaskServiceTest {
     void updateTask_shouldReturnNull_whenTaskIsNullOrNotFound() {
         // Arrange
 
-        ToDo todo = new ToDo();
+        ToDo todo = todo("Todo 3");
         taskService.addTask(new Task("Existing", Priority.LOW), todo);
 
         // Act + Assert
@@ -95,8 +105,8 @@ class TaskServiceTest {
     void deleteTask_inContext_shouldRemoveOnlyFromThatToDo() {
         // Arrange
 
-        ToDo t1 = new ToDo();
-        ToDo t2 = new ToDo();
+        ToDo t1 = todo("Todo 4");
+        ToDo t2 = todo("Todo 5");
         Task task = new Task("Task 3", Priority.HIGH);
         taskService.addTask(task, t1);
         taskService.addTask(task, t2);
@@ -114,8 +124,8 @@ class TaskServiceTest {
     void getAll_shouldReturnTasksFromAllToDos() {
         // Arrange
 
-        ToDo todo1 = new ToDo();
-        ToDo todo2 = new ToDo();
+        ToDo todo1 = todo("Todo 6");
+        ToDo todo2 = todo("Todo 7");
         Task t1 = new Task("A", Priority.LOW);
         Task t2 = new Task("B", Priority.MEDIUM);
         Task t3 = new Task("C", Priority.HIGH);
@@ -135,8 +145,8 @@ class TaskServiceTest {
     void getByToDo_shouldReturnTasksOnlyForThatToDo_orEmptyWhenNone() {
         // Arrange
 
-        ToDo todo1 = new ToDo();
-        ToDo todo2 = new ToDo();
+        ToDo todo1 = todo("Todo 8");
+        ToDo todo2 = todo("Todo 9");
         Task t1 = new Task("A", Priority.LOW);
         Task t2 = new Task("B", Priority.MEDIUM);
         taskService.addTask(t1, todo1);
@@ -152,7 +162,7 @@ class TaskServiceTest {
     void getByToDoName_shouldFindByNameWithinToDo_orReturnNull() {
         // Arrange
 
-        ToDo todo = new ToDo();
+        ToDo todo = todo("Todo 10");
         Task t1 = new Task("A", Priority.LOW);
         taskService.addTask(t1, todo);
 
@@ -167,7 +177,7 @@ class TaskServiceTest {
     void addTask_shouldNotAddDuplicateNameWithinSameToDo() {
         // Arrange
 
-        ToDo todo = new ToDo();
+        ToDo todo = todo("Todo 11");
         Task first = new Task("SameName", Priority.LOW);
         Task secondWithSameName = new Task("SameName", Priority.HIGH); // equals by name
 
@@ -184,15 +194,17 @@ class TaskServiceTest {
     }
 
     @Test
-    
     void getByUserName_shouldSearchAcrossUserTodos_orReturnNull() {
         // Arrange
         User u1 = user("u1@example.com");
         User u2 = user("u2@example.com");
-        ToDo t1 = new ToDo();
-        ToDo t2 = new ToDo();
+        ToDo t1 = todo("Todo 12");
+        ToDo t2 = todo("Todo 13");
         Task a = new Task("Alpha", Priority.LOW);
         Task b = new Task("Beta", Priority.MEDIUM);
+
+        toDoService.addTodo(u1, t1);
+        toDoService.addTodo(u1, t2);
         taskService.addTask(a, t1);
         taskService.addTask(b, t2);
 
@@ -209,6 +221,12 @@ class TaskServiceTest {
         User u = new User();
         u.setEmail(email);
         return u;
+    }
+
+    private static ToDo todo(String title) {
+        ToDo todo = new ToDo();
+        todo.setTitle(title);
+        return todo;
     }
 
 }
