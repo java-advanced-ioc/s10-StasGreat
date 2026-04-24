@@ -1,52 +1,79 @@
 package com.softserve.itacademy.service.impl;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.softserve.itacademy.model.ToDo;
 import com.softserve.itacademy.model.User;
 import com.softserve.itacademy.service.ToDoService;
-import com.softserve.itacademy.service.UserService;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ToDoServiceImpl implements ToDoService {
 
-    private UserService userService;
+    private final List<ToDo> todos = new ArrayList<>();
 
-    @Autowired
-    public ToDoServiceImpl(UserService userService) {
-        this.userService = userService;
-    }
-
+    @Override
     public ToDo addTodo(User user, ToDo todo) {
-        // TODO
-        return null;
+        if (todo == null || user == null) return null;
+        if (todo.getNormalizedTitle() == null) return null;
+        if (todos.stream().anyMatch(existing -> existing == todo)) return null;
+        if (getByUserTitle(user, todo.getTitle()) != null) return null;
+
+        todo.setOwner(user);
+        todos.add(todo);
+        user.getMyTodos().add(todo);
+        return todo;
     }
 
+    @Override
     public ToDo updateTodo(ToDo todo) {
-        // TODO
-        return null;
+        if (todo == null || todo.getOwner() == null) return null;
+        if (todo.getNormalizedTitle() == null) return null;
+
+        int index = todos.indexOf(todo);
+        if (index == -1) return null;
+
+        ToDo existing = todos.get(index);
+        existing.setCreatedAt(todo.getCreatedAt());
+        existing.setTasks(todo.getTasks());
+        return existing;
     }
 
+    @Override
     public void deleteTodo(ToDo todo) {
-        // TODO
+        if (todo == null || todo.getOwner() == null) return;
+
+        int index = todos.indexOf(todo);
+        if (index == -1) return;
+
+        ToDo existing = todos.remove(index);
+        existing.getOwner().getMyTodos().remove(existing);
     }
 
+    @Override
     public List<ToDo> getAll() {
-        // TODO
-        return null;
+        return new ArrayList<>(todos);
     }
 
+    @Override
     public List<ToDo> getByUser(User user) {
-        // TODO
-        return null;
+        if (user == null) return new ArrayList<>();
+        return todos.stream()
+                .filter(t -> user.equals(t.getOwner()))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
+    @Override
     public ToDo getByUserTitle(User user, String title) {
-        // TODO
-        return null;
+        if (user == null || title == null || title.trim().isEmpty()) {
+            return null;
+        }
+        return todos.stream()
+                .filter(t -> user.equals(t.getOwner()))
+                .filter(t -> title.trim().equals(t.getNormalizedTitle()))
+                .findFirst()
+                .orElse(null);
     }
-
 }
