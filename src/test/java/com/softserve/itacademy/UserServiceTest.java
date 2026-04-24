@@ -119,6 +119,8 @@ class UserServiceTest {
 
     private static User user(String email) {
         User u = new User();
+        u.setFirstName("John");
+        u.setLastName("Doe");
         u.setEmail(email);
         return u;
     }
